@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Tesseract Projection</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <script>
+        // Initialize scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create tesseract vertices (4D)
+        const vertices_4d = [
+            [1, 1, 1, 1], [-1, 1, 1, 1], [-1, -1, 1, 1], [1, -1, 1, 1],
+            [1, 1, -1, 1], [-1, 1, -1, 1], [-1, -1, -1, 1], [1, -1, -1, 1],
+            [1, 1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, -1], [1, -1, 1, -1],
+            [1, 1, -1, -1], [-1, 1, -1, -1], [-1, -1, -1, -1], [1, -1, -1, -1]
+        ];
+
+        // Project 4D to 3D by dropping the 4th dimension (w)
+        function projectTo3D(vertices_4d) {
+            return vertices_4d.map(v => new THREE.Vector3(v[0], v[1], v[2]));
+        }
+
+        // Create edges of the tesseract (pairs of vertices)
+        const edges = [
+            [0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4],
+            [0, 4], [1, 5], [2, 6], [3, 7], [8, 9], [9, 10], [10, 11], [11, 8],
+            [0, 8], [1, 9], [2, 10], [3, 11], [4, 12], [5, 13], [6, 14], [7, 15],
+            [4, 8], [5, 9], [6, 10], [7, 11], [12, 13], [13, 14], [14, 15], [15, 12],
+            [8, 12], [9, 13], [10, 14], [11, 15]
+        ];
+
+        const projectedVertices = projectTo3D(vertices_4d);
+
+        // Create geometry for the edges and add them to the scene
+        const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+        edges.forEach(edge => {
+            const geometry = new THREE.Geometry();
+            geometry.vertices.push(projectedVertices[edge[0]], projectedVertices[edge[1]]);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+        });
+
+        // Set camera position
+        camera.position.z = 5;
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate the tesseract projection for better visualization
+            scene.rotation.x += 0.01;
+            scene.rotation.y += 0.01;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
